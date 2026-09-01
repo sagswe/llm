@@ -15,9 +15,10 @@ uv run learning-llm
 
 - `main`: project foundation and shared learning documentation.
 - `transformer`: transformer primitives such as attention, MLPs, normalization,
-  and transformer blocks.
+  and a single transformer block.
 - `llm` (later): the complete decoder-only language model, including token and
-  positional embeddings, training, and generation.
+  positional embeddings, a stack of transformer blocks, training, and
+  generation.
 
 GPT-2 small (12 layers, 12 heads, 768-dimensional embeddings) is the reference
 architecture. Exercises and tests should default to much smaller dimensions so

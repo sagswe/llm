@@ -35,7 +35,7 @@ Implement transformer internals in an educational order:
 3. single-head and multi-head self-attention;
 4. feed-forward/MLP layer;
 5. residual connections and layer normalization;
-6. a decoder transformer block and a stack of blocks.
+6. a decoder transformer block.
 
 Keep tokenization, token embeddings, positional encoding/embeddings, language
 model loss, training loops, and autoregressive generation out of this branch.
@@ -43,8 +43,8 @@ model loss, training loops, and autoregressive generation out of this branch.
 ### `llm` (create later from `transformer`)
 
 Assemble the complete decoder-only model. Add token and positional embeddings,
-an LM head, weight tying where appropriate, training/evaluation loops,
-checkpointing, and autoregressive text generation.
+a stack of transformer blocks, an LM head, weight tying where appropriate,
+training/evaluation loops, checkpointing, and autoregressive text generation.
 
 Use GPT-2 small as a conceptual reference: 12 blocks, 12 attention heads,
 embedding width 768, context length 1024, and vocabulary size 50,257. Do not use
