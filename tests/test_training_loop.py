@@ -8,7 +8,11 @@ from torch.utils.data import DataLoader
 
 from learning_llm.data import EncodedTextDataset
 from learning_llm.model import DecoderLanguageModel, ModelConfig
-from learning_llm.scripts.train_tinystories_model import _model_dimensions_from_args
+from learning_llm.scripts.train_tinystories_model import (
+    _model_dimensions_from_args,
+    _planned_training_steps,
+    _validate_run_size,
+)
 from learning_llm.training import TrainingConfig, train
 
 
@@ -83,6 +87,48 @@ class TrainingLoopTests(unittest.TestCase):
         self.assertEqual(dimensions["n_head"], 8)
         self.assertEqual(dimensions["n_layer"], 6)
         self.assertEqual(dimensions["dropout"], 0.0)
+
+    def test_planned_training_steps_respects_max_steps(self):
+        planned_steps = _planned_training_steps(
+            train_windows=1_000,
+            batch_size=10,
+            epochs=3,
+            max_steps=50,
+        )
+
+        self.assertEqual(planned_steps, 50)
+
+    def test_planned_training_steps_counts_full_epochs(self):
+        planned_steps = _planned_training_steps(
+            train_windows=1_000,
+            batch_size=10,
+            epochs=3,
+            max_steps=None,
+        )
+
+        self.assertEqual(planned_steps, 300)
+
+    def test_run_size_guard_rejects_accidental_huge_runs(self):
+        with self.assertRaisesRegex(ValueError, "very large"):
+            _validate_run_size(
+                1_000_001,
+                allow_long_run=False,
+                safety_threshold=1_000_000,
+            )
+
+    def test_run_size_guard_allows_explicit_huge_runs(self):
+        _validate_run_size(
+            1_000_001,
+            allow_long_run=True,
+            safety_threshold=1_000_000,
+        )
+
+    def test_dataset_stride_reduces_overlapping_windows(self):
+        dense = EncodedTextDataset(torch.arange(101), context_length=10, stride=1)
+        sparse = EncodedTextDataset(torch.arange(101), context_length=10, stride=10)
+
+        self.assertEqual(len(dense), 91)
+        self.assertEqual(len(sparse), 10)
 
 
 if __name__ == "__main__":

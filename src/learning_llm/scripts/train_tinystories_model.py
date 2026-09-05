@@ -62,9 +62,20 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--max-steps", type=int, default=1_000)
     parser.add_argument(
+        "--stride",
+        type=int,
+        default=1,
+        help="Distance between adjacent training windows in tokens.",
+    )
+    parser.add_argument(
         "--full-epochs",
         action="store_true",
         help="Ignore --max-steps and train for complete epochs.",
+    )
+    parser.add_argument(
+        "--allow-long-run",
+        action="store_true",
+        help="Allow planned runs above the safety threshold.",
     )
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=0.1)
@@ -103,10 +114,12 @@ def main() -> None:
     train_dataset = EncodedTextDataset(
         train_ids,
         context_length=model_dimensions["context_length"],
+        stride=args.stride,
     )
     validation_dataset = EncodedTextDataset(
         validation_ids,
         context_length=model_dimensions["context_length"],
+        stride=args.stride,
     )
     train_loader = DataLoader(
         train_dataset,
@@ -143,6 +156,13 @@ def main() -> None:
         resume_from=args.resume_from,
         checkpoint_each_epoch=not args.no_epoch_checkpoints,
     )
+    planned_steps = _planned_training_steps(
+        train_windows=len(train_dataset),
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        max_steps=training_config.max_steps,
+    )
+    _validate_run_size(planned_steps, allow_long_run=args.allow_long_run)
 
     print(
         "training setup "
@@ -150,8 +170,10 @@ def main() -> None:
         f"tokens={len(token_ids)} "
         f"train_windows={len(train_dataset)} "
         f"val_windows={len(validation_dataset)} "
+        f"planned_steps={planned_steps} "
         f"vocab={tokenizer.vocab_size} "
         f"context={model_config.context_length} "
+        f"stride={args.stride} "
         f"d_model={model_config.d_model} "
         f"layers={model_config.n_layer} "
         f"heads={model_config.n_head}"
@@ -192,6 +214,36 @@ def _model_dimensions_from_args(args: argparse.Namespace) -> dict[str, int | flo
         if value is not None:
             preset[key] = value
     return preset
+
+
+def _planned_training_steps(
+    *,
+    train_windows: int,
+    batch_size: int,
+    epochs: int,
+    max_steps: int | None,
+) -> int:
+    full_epoch_steps = train_windows // batch_size
+    planned_steps = full_epoch_steps * epochs
+    if max_steps is not None:
+        planned_steps = min(planned_steps, max_steps)
+    return planned_steps
+
+
+def _validate_run_size(
+    planned_steps: int,
+    *,
+    allow_long_run: bool,
+    safety_threshold: int = 1_000_000,
+) -> None:
+    if planned_steps > safety_threshold and not allow_long_run:
+        raise ValueError(
+            "planned training run is very large: "
+            f"{planned_steps:,} optimizer steps. "
+            "Use --max-steps for a bounded run, increase --stride to sample "
+            "fewer overlapping windows, or pass --allow-long-run if this is "
+            "intentional."
+        )
 
 
 def _split_token_stream(

@@ -73,10 +73,16 @@ uv run learning-llm-train \
   --n-layer 4 \
   --batch-size 32 \
   --epochs 3 \
-  --full-epochs \
+  --max-steps 50000 \
   --eval-interval 1000 \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
+
+Omitting `--max-documents` uses the full TinyStories split. Keep `--max-steps`
+for bounded training; a full epoch over stride-1 windows is very large. For
+example, 462M tokens with context length 128 and batch size 32 creates about
+13M optimizer steps per epoch. At 3 steps/sec, three full epochs would take
+around 149 days.
 
 Full TinyStories run with GPT-2 Small architecture dimensions and the trained
 50,000-token TinyStories BPE vocabulary:
@@ -87,13 +93,14 @@ uv run learning-llm-train \
   --model-preset gpt2-small \
   --batch-size 1 \
   --epochs 1 \
-  --full-epochs \
+  --max-steps 10000 \
   --eval-interval 1000 \
   --checkpoint artifacts/checkpoints/tinystories-gpt2-small-shape.pt
 ```
 
-`--max-documents` is optional; omit it to use the full TinyStories training
-split. Use `--no-epoch-checkpoints` to save only the final checkpoint. Use
+For intentional complete-epoch training, pass `--full-epochs --allow-long-run`.
+Use `--stride 128` or another larger stride to reduce overlap between windows.
+Use `--no-epoch-checkpoints` to save only the final checkpoint. Use
 `--resume-from artifacts/checkpoints/tinystories-tiny-lm.pt` to continue from a
 checkpoint without resetting optimizer state.
 
