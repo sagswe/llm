@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from unittest.mock import patch
 
 import torch
 from torch.utils.data import DataLoader
@@ -9,6 +10,8 @@ from torch.utils.data import DataLoader
 from learning_llm.data import EncodedTextDataset
 from learning_llm.model import DecoderLanguageModel, ModelConfig
 from learning_llm.scripts.train_tinystories_model import (
+    _default_encoded_cache_path,
+    _load_or_encode_token_ids,
     _model_dimensions_from_args,
     _planned_training_steps,
     _validate_run_size,
@@ -129,6 +132,41 @@ class TrainingLoopTests(unittest.TestCase):
 
         self.assertEqual(len(dense), 91)
         self.assertEqual(len(sparse), 10)
+
+    def test_default_encoded_cache_path_distinguishes_full_and_limited_data(self):
+        tokenizer_path = Path("artifacts/tokenizers/tinystories-bpe-50k/tokenizer.json")
+
+        full_path = _default_encoded_cache_path(
+            tokenizer_path=tokenizer_path,
+            max_documents=None,
+        )
+        limited_path = _default_encoded_cache_path(
+            tokenizer_path=tokenizer_path,
+            max_documents=10000,
+        )
+
+        self.assertIn("tinystories-full", str(full_path))
+        self.assertIn("tinystories-10000", str(limited_path))
+        self.assertNotEqual(full_path, limited_path)
+
+    def test_load_or_encode_token_ids_reuses_cache_without_dataset_access(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache_path = Path(directory) / "encoded.pt"
+            torch.save({"token_ids": torch.tensor([1, 2, 3], dtype=torch.int32)}, cache_path)
+
+            with patch("learning_llm.scripts.train_tinystories_model.iter_tinystories_texts") as texts:
+                token_ids = _load_or_encode_token_ids(
+                    tokenizer=None,
+                    eos_id=None,
+                    cache_path=cache_path,
+                    max_documents=None,
+                    offline=True,
+                    rebuild=False,
+                    verbose=False,
+                )
+
+        self.assertEqual(token_ids, [1, 2, 3])
+        texts.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """Train a tiny decoder-only language model on TinyStories."""
 
 import argparse
+import hashlib
 from pathlib import Path
 
 import torch
@@ -46,6 +47,22 @@ def main() -> None:
         type=int,
         default=None,
         help="Limit documents for experiments; omit to train on the full split.",
+    )
+    parser.add_argument(
+        "--encoded-cache",
+        type=Path,
+        default=None,
+        help="Path for cached encoded token IDs. Defaults under artifacts/datasets.",
+    )
+    parser.add_argument(
+        "--rebuild-encoded-cache",
+        action="store_true",
+        help="Ignore any existing encoded cache and rebuild it from TinyStories.",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Use only locally cached Hugging Face dataset files.",
     )
     parser.add_argument(
         "--model-preset",
@@ -112,9 +129,18 @@ def main() -> None:
     tokenizer = BPETokenizer.from_file(args.tokenizer)
     eos_id = tokenizer.token_to_id("<eos>")
 
-    print("loading TinyStories")
-    text_config = TinyStoriesConfig(max_documents=args.max_documents)
-    token_ids = _encode_documents(tokenizer, iter_tinystories_texts(text_config), eos_id)
+    encoded_cache_path = args.encoded_cache or _default_encoded_cache_path(
+        tokenizer_path=args.tokenizer,
+        max_documents=args.max_documents,
+    )
+    token_ids = _load_or_encode_token_ids(
+        tokenizer=tokenizer,
+        eos_id=eos_id,
+        cache_path=encoded_cache_path,
+        max_documents=args.max_documents,
+        offline=args.offline,
+        rebuild=args.rebuild_encoded_cache,
+    )
     train_ids, validation_ids = _split_token_stream(
         token_ids,
         train_fraction=args.train_fraction,
@@ -213,6 +239,59 @@ def _encode_documents(
         if eos_id is not None:
             token_stream.append(eos_id)
     return token_stream
+
+
+def _load_or_encode_token_ids(
+    *,
+    tokenizer: BPETokenizer,
+    eos_id: int | None,
+    cache_path: Path,
+    max_documents: int | None,
+    offline: bool,
+    rebuild: bool,
+    verbose: bool = True,
+) -> list[int]:
+    if cache_path.exists() and not rebuild:
+        if verbose:
+            print(f"loading encoded token cache: {cache_path}")
+        payload = torch.load(cache_path, map_location="cpu")
+        token_ids = payload["token_ids"]
+        if isinstance(token_ids, torch.Tensor):
+            return token_ids.tolist()
+        return list(token_ids)
+
+    if verbose:
+        print("loading TinyStories")
+    text_config = TinyStoriesConfig(
+        max_documents=max_documents,
+        local_files_only=offline,
+    )
+    token_ids = _encode_documents(tokenizer, iter_tinystories_texts(text_config), eos_id)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {
+            "token_ids": torch.tensor(token_ids, dtype=torch.int32),
+            "documents": max_documents,
+            "vocab_size": tokenizer.vocab_size,
+        },
+        cache_path,
+    )
+    if verbose:
+        print(f"saved encoded token cache: {cache_path}")
+    return token_ids
+
+
+def _default_encoded_cache_path(
+    *,
+    tokenizer_path: Path,
+    max_documents: int | None,
+) -> Path:
+    document_label = "full" if max_documents is None else str(max_documents)
+    tokenizer_key = hashlib.sha1(str(tokenizer_path).encode("utf-8")).hexdigest()[:8]
+    return Path(
+        "artifacts/datasets/"
+        f"tinystories-{document_label}-tok-{tokenizer_key}.pt"
+    )
 
 
 def _model_dimensions_from_args(args: argparse.Namespace) -> dict[str, int | float]:

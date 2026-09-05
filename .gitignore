@@ -8,6 +8,7 @@ __pycache__/
 .hf-cache/
 .tiktoken-cache/
 artifacts/checkpoints/
+artifacts/datasets/
 dist/
 build/
 *.egg-info/

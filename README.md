@@ -54,6 +54,13 @@ On Apple Silicon, run training from your normal terminal rather than a
 restricted sandbox so PyTorch can access Metal/MPS. The command logs `using
 device: mps` when the M4 Pro GPU is active.
 
+TinyStories is cached under `.hf-cache` after the first download, but Hugging
+Face Datasets may still check the Hub for metadata. Add `--offline` after the
+dataset exists locally to force cache-only loading. The training command also
+caches encoded token IDs under `artifacts/datasets/`; later runs reuse that
+cache and skip dataset iteration plus BPE encoding. Add
+`--rebuild-encoded-cache` only when you intentionally want to regenerate it.
+
 Quick smoke run:
 
 ```bash
@@ -69,6 +76,7 @@ uv run learning-llm-train \
   --max-steps 1000 \
   --eval-interval 100 \
   --device auto \
+  --offline \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
 
@@ -86,6 +94,7 @@ uv run learning-llm-train \
   --max-steps 50000 \
   --eval-interval 1000 \
   --device auto \
+  --offline \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
 
@@ -107,6 +116,7 @@ uv run learning-llm-train \
   --max-steps 10000 \
   --eval-interval 1000 \
   --device auto \
+  --offline \
   --checkpoint artifacts/checkpoints/tinystories-gpt2-small-shape.pt
 ```
 
