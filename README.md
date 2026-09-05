@@ -50,6 +50,10 @@ Apple MPS, then CPU. Pass `--device cuda`, `--device cuda:0`, `--device mps`, or
 `--device cpu` to force a device. On CUDA machines, `--pin-memory` and
 `--num-workers 4` can improve input-pipeline throughput.
 
+On Apple Silicon, run training from your normal terminal rather than a
+restricted sandbox so PyTorch can access Metal/MPS. The command logs `using
+device: mps` when the M4 Pro GPU is active.
+
 Quick smoke run:
 
 ```bash

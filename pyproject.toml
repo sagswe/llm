@@ -12,7 +12,7 @@ dependencies = [
     "numpy<2",
     "tiktoken>=0.14.0",
     "tokenizers>=0.22.1",
-    "torch==2.2.2",
+    "torch>=2.7",
 ]
 
 [project.scripts]

@@ -1,5 +1,6 @@
 """Checkpoint save/load helpers."""
 
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,7 @@ def save_checkpoint(
         {
             "model_state": model.state_dict(),
             "optimizer_state": optimizer.state_dict(),
-            "config": model.config,
+            "config": asdict(model.config),
             "step": step,
             "epoch": epoch,
             "metadata": metadata or {},
