@@ -1,9 +1,5 @@
-from torch import nn
+"""Compatibility import for token embeddings."""
 
-class TokenEmbedding(nn.Module):
-    def __init__(self, vocab_size: int, embed_size: int):
-        super().__init__()
-        self.embedding = nn.Embedding(vocab_size, embed_size)
+from learning_llm.model.embeddings import TokenEmbedding
 
-    def forward(self, x):
-        return self.embedding(x)
+__all__ = ["TokenEmbedding"]

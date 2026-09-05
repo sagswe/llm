@@ -28,10 +28,10 @@ context length sixteen, and a small vocabulary.
 
 ### 1. Model configuration
 
-- [ ] Define a configuration object for model dimensions and behavior.
-- [ ] Provide a tiny default configuration for examples and development.
-- [ ] Provide an explicit GPT-2 Small reference configuration.
-- [ ] Validate invariants such as `C % H == 0` and `T <= context_length`.
+- [x] Define a configuration object for model dimensions and behavior.
+- [x] Provide a tiny default configuration for examples and development.
+- [x] Provide an explicit GPT-2 Small reference configuration.
+- [x] Validate invariants such as `C % H == 0` and `T <= context_length`.
 
 The configuration should be the single source of truth for vocabulary size,
 context length, model width, number of heads, number of blocks, dropout, and
@@ -43,12 +43,12 @@ three heads with model width eight should produce a clear validation error.
 
 ### 2. Tokenizer
 
-- [ ] Define a small tokenizer interface with `encode` and `decode` operations.
-- [ ] Add a simple tokenizer suitable for learning and tiny local examples.
-- [ ] Add GPT-2-compatible byte-level BPE tokenization when compatibility is
+- [x] Define a small tokenizer interface with `encode` and `decode` operations.
+- [x] Add a simple tokenizer suitable for learning and tiny local examples.
+- [x] Add GPT-2-compatible byte-level BPE tokenization when compatibility is
       needed.
-- [ ] Handle the end-of-text or other explicitly supported special tokens.
-- [ ] Confirm that representative text survives an encode/decode round trip.
+- [x] Handle the end-of-text or other explicitly supported special tokens.
+- [x] Confirm that representative text survives an encode/decode round trip.
 
 Tokenization converts text into integer token IDs and back. Keeping the model
 independent from the concrete tokenizer will let us first learn with a small
@@ -60,9 +60,9 @@ formed later by arranging token windows into a tensor of shape `(B, T)`.
 
 ### 3. Token embeddings
 
-- [ ] Map token IDs `(B, T)` to token vectors `(B, T, C)`.
-- [ ] Document how each embedding row corresponds to one vocabulary token.
-- [ ] Reject or clearly report token IDs outside `[0, V)`.
+- [x] Map token IDs `(B, T)` to token vectors `(B, T, C)`.
+- [x] Document how each embedding row corresponds to one vocabulary token.
+- [x] Reject or clearly report token IDs outside `[0, V)`.
 
 An embedding table has shape `(V, C)`, where `V` is vocabulary size. Looking up
 each input ID produces the initial learned representation of that token.
@@ -72,10 +72,10 @@ token embeddings with shape `(2, 5, 8)`.
 
 ### 4. Learned positional embeddings
 
-- [ ] Create learned embeddings for positions `0` through
+- [x] Create learned embeddings for positions `0` through
       `context_length - 1`.
-- [ ] Add positional embeddings to token embeddings without changing shape.
-- [ ] Validate that the requested sequence fits inside the context length.
+- [x] Add positional embeddings to token embeddings without changing shape.
+- [x] Validate that the requested sequence fits inside the context length.
 
 Causal attention knows which tokens are visible but does not otherwise know
 their positions. Learned positional embeddings give the model a distinct vector
@@ -87,10 +87,10 @@ with the same token vector but receives different positional information.
 
 ### 5. Stack of transformer blocks
 
-- [ ] Build a module containing `N` transformer blocks.
-- [ ] Pass hidden states through each block in order.
-- [ ] Keep the hidden-state shape `(B, T, C)` unchanged across the stack.
-- [ ] Optionally collect attention weights for inspection without coupling core
+- [x] Build a module containing `N` transformer blocks.
+- [x] Pass hidden states through each block in order.
+- [x] Keep the hidden-state shape `(B, T, C)` unchanged across the stack.
+- [x] Optionally collect attention weights for inspection without coupling core
       model behavior to visualization.
 
 Each block refines the residual stream. Stacking belongs to the complete LLM
@@ -103,8 +103,8 @@ weights shaped `(B, H, T, T)`.
 
 ### 6. Final layer normalization
 
-- [ ] Apply a final layer normalization after the transformer stack.
-- [ ] Confirm that normalization preserves `(B, T, C)`.
+- [x] Apply a final layer normalization after the transformer stack.
+- [x] Confirm that normalization preserves `(B, T, C)`.
 
 GPT-style pre-normalized blocks normalize before each sublayer and also apply a
 final normalization before producing vocabulary logits.
