@@ -1,6 +1,7 @@
 """Reusable training loop with progress bars and periodic evaluation."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from time import perf_counter
 
 import torch
@@ -85,12 +86,13 @@ def train(
         )
         global_step = int(checkpoint["step"])
         start_epoch = int(checkpoint["epoch"])
-        print(
-            "resumed checkpoint "
-            f"path={config.resume_from} "
-            f"step={global_step} "
-            f"epoch={start_epoch}"
-        )
+        if config.show_progress:
+            print(
+                "resumed checkpoint "
+                f"path={config.resume_from} "
+                f"step={global_step} "
+                f"epoch={start_epoch}"
+            )
 
     batches_per_epoch = len(train_loader)
     planned_steps = batches_per_epoch * config.epochs
@@ -102,6 +104,7 @@ def train(
         desc="training",
         unit="step",
         dynamic_ncols=True,
+        disable=not config.show_progress,
     )
 
     last_train_loss = float("nan")
@@ -143,18 +146,36 @@ def train(
                     max_batches=config.eval_batches,
                 )
                 last_validation_loss = result.loss
-                progress.write(
-                    "eval "
-                    f"step={global_step} "
-                    f"val_loss={result.loss:.4f} "
-                    f"batches={result.batches}"
-                )
+                if config.show_progress:
+                    progress.write(
+                        "eval "
+                        f"step={global_step} "
+                        f"val_loss={result.loss:.4f} "
+                        f"batches={result.batches}"
+                    )
 
             if config.max_steps is not None and global_step >= config.max_steps:
                 break
 
         if config.max_steps is not None and global_step >= config.max_steps:
             break
+
+        if config.checkpoint_each_epoch:
+            epoch_path = _epoch_checkpoint_path(config.checkpoint_path, epoch)
+            save_checkpoint(
+                epoch_path,
+                model=model,
+                optimizer=optimizer,
+                step=global_step,
+                epoch=epoch,
+                metadata={
+                    "last_train_loss": last_train_loss,
+                    "last_validation_loss": last_validation_loss,
+                    "checkpoint_kind": "epoch",
+                },
+            )
+            if config.show_progress:
+                progress.write(f"epoch checkpoint saved: {epoch_path}")
 
     progress.close()
     save_checkpoint(
@@ -168,10 +189,17 @@ def train(
             "last_validation_loss": last_validation_loss,
         },
     )
-    print(f"checkpoint saved: {config.checkpoint_path}")
+    if config.show_progress:
+        print(f"checkpoint saved: {config.checkpoint_path}")
     return TrainingResult(
         steps=global_step,
         epochs=epoch,
         last_train_loss=last_train_loss,
         last_validation_loss=last_validation_loss,
     )
+
+
+def _epoch_checkpoint_path(path: str | Path, epoch: int) -> Path:
+    """Create `name-epoch-0001.pt` beside the final checkpoint path."""
+    path = Path(path)
+    return path.with_name(f"{path.stem}-epoch-{epoch:04d}{path.suffix}")

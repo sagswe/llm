@@ -12,6 +12,23 @@ from learning_llm.model import DecoderLanguageModel, ModelConfig
 from learning_llm.training import TrainingConfig, train
 
 
+_TINY_PRESET = {
+    "context_length": 64,
+    "d_model": 128,
+    "n_head": 4,
+    "n_layer": 4,
+    "dropout": 0.1,
+}
+
+_GPT2_SMALL_PRESET = {
+    "context_length": 1_024,
+    "d_model": 768,
+    "n_head": 12,
+    "n_layer": 12,
+    "dropout": 0.1,
+}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -24,12 +41,23 @@ def main() -> None:
         type=Path,
         default=Path("artifacts/checkpoints/tinystories-tiny-lm.pt"),
     )
-    parser.add_argument("--max-documents", type=int, default=10_000)
-    parser.add_argument("--context-length", type=int, default=64)
-    parser.add_argument("--d-model", type=int, default=128)
-    parser.add_argument("--n-head", type=int, default=4)
-    parser.add_argument("--n-layer", type=int, default=4)
-    parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument(
+        "--max-documents",
+        type=int,
+        default=None,
+        help="Limit documents for experiments; omit to train on the full split.",
+    )
+    parser.add_argument(
+        "--model-preset",
+        choices=("tiny", "gpt2-small"),
+        default="tiny",
+        help="Preset architecture. Explicit dimension flags override it.",
+    )
+    parser.add_argument("--context-length", type=int, default=None)
+    parser.add_argument("--d-model", type=int, default=None)
+    parser.add_argument("--n-head", type=int, default=None)
+    parser.add_argument("--n-layer", type=int, default=None)
+    parser.add_argument("--dropout", type=float, default=None)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--max-steps", type=int, default=1_000)
@@ -51,7 +79,13 @@ def main() -> None:
         default=None,
         help="Checkpoint to resume model and optimizer state from.",
     )
+    parser.add_argument(
+        "--no-epoch-checkpoints",
+        action="store_true",
+        help="Only save the final checkpoint path instead of one file per epoch.",
+    )
     args = parser.parse_args()
+    model_dimensions = _model_dimensions_from_args(args)
 
     torch.manual_seed(args.seed)
     tokenizer = BPETokenizer.from_file(args.tokenizer)
@@ -63,13 +97,16 @@ def main() -> None:
     train_ids, validation_ids = _split_token_stream(
         token_ids,
         train_fraction=args.train_fraction,
-        min_validation_tokens=args.context_length + 1,
+        min_validation_tokens=model_dimensions["context_length"] + 1,
     )
 
-    train_dataset = EncodedTextDataset(train_ids, context_length=args.context_length)
+    train_dataset = EncodedTextDataset(
+        train_ids,
+        context_length=model_dimensions["context_length"],
+    )
     validation_dataset = EncodedTextDataset(
         validation_ids,
-        context_length=args.context_length,
+        context_length=model_dimensions["context_length"],
     )
     train_loader = DataLoader(
         train_dataset,
@@ -86,11 +123,11 @@ def main() -> None:
 
     model_config = ModelConfig(
         vocab_size=tokenizer.vocab_size,
-        context_length=args.context_length,
-        d_model=args.d_model,
-        n_head=args.n_head,
-        n_layer=args.n_layer,
-        dropout=args.dropout,
+        context_length=model_dimensions["context_length"],
+        d_model=model_dimensions["d_model"],
+        n_head=model_dimensions["n_head"],
+        n_layer=model_dimensions["n_layer"],
+        dropout=model_dimensions["dropout"],
     )
     training_config = TrainingConfig(
         batch_size=args.batch_size,
@@ -104,19 +141,20 @@ def main() -> None:
         device=args.device,
         checkpoint_path=args.checkpoint,
         resume_from=args.resume_from,
+        checkpoint_each_epoch=not args.no_epoch_checkpoints,
     )
 
     print(
         "training setup "
-        f"docs={args.max_documents} "
+        f"docs={'full' if args.max_documents is None else args.max_documents} "
         f"tokens={len(token_ids)} "
         f"train_windows={len(train_dataset)} "
         f"val_windows={len(validation_dataset)} "
         f"vocab={tokenizer.vocab_size} "
-        f"context={args.context_length} "
-        f"d_model={args.d_model} "
-        f"layers={args.n_layer} "
-        f"heads={args.n_head}"
+        f"context={model_config.context_length} "
+        f"d_model={model_config.d_model} "
+        f"layers={model_config.n_layer} "
+        f"heads={model_config.n_head}"
     )
     model = DecoderLanguageModel(model_config)
     result = train(model, train_loader, validation_loader, training_config)
@@ -139,6 +177,21 @@ def _encode_documents(
         if eos_id is not None:
             token_stream.append(eos_id)
     return token_stream
+
+
+def _model_dimensions_from_args(args: argparse.Namespace) -> dict[str, int | float]:
+    preset = dict(_GPT2_SMALL_PRESET if args.model_preset == "gpt2-small" else _TINY_PRESET)
+    overrides = {
+        "context_length": args.context_length,
+        "d_model": args.d_model,
+        "n_head": args.n_head,
+        "n_layer": args.n_layer,
+        "dropout": args.dropout,
+    }
+    for key, value in overrides.items():
+        if value is not None:
+            preset[key] = value
+    return preset
 
 
 def _split_token_stream(

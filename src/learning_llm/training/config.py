@@ -19,6 +19,8 @@ class TrainingConfig:
     device: str = "cpu"
     checkpoint_path: Path = Path("artifacts/checkpoints/tiny-lm.pt")
     resume_from: Path | None = None
+    checkpoint_each_epoch: bool = True
+    show_progress: bool = True
 
     def __post_init__(self) -> None:
         if self.batch_size <= 0:

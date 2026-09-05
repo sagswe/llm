@@ -41,9 +41,11 @@ quick local experiment.
 
 ## Train the language model
 
-This command trains a small CPU-friendly decoder model with the TinyStories BPE
-tokenizer. It logs a progress bar with epoch, batch, loss, token throughput,
-ETA, and periodic validation loss.
+Training logs a progress bar with epoch, batch, loss, token throughput, ETA,
+periodic validation loss, a final checkpoint, and by default one checkpoint per
+completed epoch.
+
+Quick smoke run:
 
 ```bash
 HF_HOME=.hf-cache UV_CACHE_DIR=.uv-cache TIKTOKEN_CACHE_DIR=.tiktoken-cache \
@@ -60,9 +62,40 @@ uv run learning-llm-train \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
 
-Use `--full-epochs` to ignore `--max-steps`. Use `--resume-from
-artifacts/checkpoints/tinystories-tiny-lm.pt` to continue from a checkpoint
-without resetting optimizer state.
+Full TinyStories run with the default tiny architecture:
+
+```bash
+HF_HOME=.hf-cache UV_CACHE_DIR=.uv-cache TIKTOKEN_CACHE_DIR=.tiktoken-cache \
+uv run learning-llm-train \
+  --context-length 64 \
+  --d-model 128 \
+  --n-head 4 \
+  --n-layer 4 \
+  --batch-size 32 \
+  --epochs 3 \
+  --full-epochs \
+  --eval-interval 1000 \
+  --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
+```
+
+Full TinyStories run with GPT-2 Small architecture dimensions and the trained
+50,000-token TinyStories BPE vocabulary:
+
+```bash
+HF_HOME=.hf-cache UV_CACHE_DIR=.uv-cache TIKTOKEN_CACHE_DIR=.tiktoken-cache \
+uv run learning-llm-train \
+  --model-preset gpt2-small \
+  --batch-size 1 \
+  --epochs 1 \
+  --full-epochs \
+  --eval-interval 1000 \
+  --checkpoint artifacts/checkpoints/tinystories-gpt2-small-shape.pt
+```
+
+`--max-documents` is optional; omit it to use the full TinyStories training
+split. Use `--no-epoch-checkpoints` to save only the final checkpoint. Use
+`--resume-from artifacts/checkpoints/tinystories-tiny-lm.pt` to continue from a
+checkpoint without resetting optimizer state.
 
 ## Generate text
 
