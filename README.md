@@ -39,6 +39,44 @@ The default command downloads the TinyStories training split through Hugging
 Face Datasets and trains on the full split. Add `--max-documents 10000` for a
 quick local experiment.
 
+## Train the language model
+
+This command trains a small CPU-friendly decoder model with the TinyStories BPE
+tokenizer. It logs a progress bar with epoch, batch, loss, token throughput,
+ETA, and periodic validation loss.
+
+```bash
+HF_HOME=.hf-cache UV_CACHE_DIR=.uv-cache TIKTOKEN_CACHE_DIR=.tiktoken-cache \
+uv run learning-llm-train \
+  --max-documents 10000 \
+  --context-length 64 \
+  --d-model 128 \
+  --n-head 4 \
+  --n-layer 4 \
+  --batch-size 32 \
+  --epochs 1 \
+  --max-steps 1000 \
+  --eval-interval 100 \
+  --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
+```
+
+Use `--full-epochs` to ignore `--max-steps`. Use `--resume-from
+artifacts/checkpoints/tinystories-tiny-lm.pt` to continue from a checkpoint
+without resetting optimizer state.
+
+## Generate text
+
+```bash
+UV_CACHE_DIR=.uv-cache \
+uv run learning-llm-generate \
+  --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt \
+  --tokenizer artifacts/tokenizers/tinystories-bpe-50k/tokenizer.json \
+  --prompt "Once upon a time" \
+  --max-new-tokens 80 \
+  --temperature 0.8 \
+  --top-k 50
+```
+
 ## Branches
 
 - `main`: project foundation and shared learning documentation.

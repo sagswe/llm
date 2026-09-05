@@ -95,6 +95,10 @@ class BPETokenizer:
             raise TypeError(f"text must be a string, got {type(text).__name__}")
         return self.tokenizer.encode(text).ids
 
+    def token_to_id(self, token: str) -> int | None:
+        """Return the ID for a special or vocabulary token when present."""
+        return self.tokenizer.token_to_id(token)
+
     def decode(self, token_ids: Iterable[int]) -> str:
         """Decode token IDs into text."""
         ids = list(token_ids)

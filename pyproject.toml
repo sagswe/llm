@@ -17,6 +17,9 @@ dependencies = [
 
 [project.scripts]
 learning-llm = "learning_llm:main"
+learning-llm-generate = "learning_llm.scripts.generate_text:main"
+learning-llm-train = "learning_llm.scripts.train_tinystories_model:main"
+learning-llm-train-tokenizer = "learning_llm.scripts.train_tinystories_tokenizer:main"
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]

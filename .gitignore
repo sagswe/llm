@@ -7,6 +7,7 @@ __pycache__/
 .uv-cache/
 .hf-cache/
 .tiktoken-cache/
+artifacts/checkpoints/
 dist/
 build/
 *.egg-info/

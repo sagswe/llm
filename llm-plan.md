@@ -126,11 +126,11 @@ single parameter.
 
 ### 8. Complete decoder-only model
 
-- [ ] Compose token embeddings, positional embeddings, dropout, transformer
+- [x] Compose token embeddings, positional embeddings, dropout, transformer
       blocks, final normalization, and the LM head.
-- [ ] Keep the forward path readable and annotate all important shapes.
-- [ ] Support inference without requiring targets.
-- [ ] Initialize parameters deliberately and document the chosen scheme.
+- [x] Keep the forward path readable and annotate all important shapes.
+- [x] Support inference without requiring targets.
+- [x] Initialize parameters deliberately and document the chosen scheme.
 
 The model forward pass should follow this sequence:
 
@@ -142,11 +142,11 @@ The model forward pass should follow this sequence:
 
 ### 9. Next-token language-model loss
 
-- [ ] Accept target token IDs with shape `(B, T)` when training.
-- [ ] Compute cross-entropy between logits and next-token targets.
-- [ ] Reshape logits and targets explicitly to show how token positions become
+- [x] Accept target token IDs with shape `(B, T)` when training.
+- [x] Compute cross-entropy between logits and next-token targets.
+- [x] Reshape logits and targets explicitly to show how token positions become
       independent classification examples.
-- [ ] Support an ignore index if padded or intentionally masked targets are
+- [x] Support an ignore index if padded or intentionally masked targets are
       introduced.
 
 For an autoregressive batch, inputs and targets are shifted views of the same
@@ -159,11 +159,11 @@ Example scenario: a model given `"the cat sat"` learns that after the prefix
 
 ### 10. Dataset and batching utilities
 
-- [ ] Load a small text corpus deterministically.
-- [ ] Tokenize the corpus once or document when tokenization occurs.
-- [ ] Create fixed-length input and next-token target windows.
-- [ ] Batch windows into tensors shaped `(B, T)`.
-- [ ] Separate training and validation data without leakage.
+- [x] Load a small text corpus deterministically.
+- [x] Tokenize the corpus once or document when tokenization occurs.
+- [x] Create fixed-length input and next-token target windows.
+- [x] Batch windows into tensors shaped `(B, T)`.
+- [x] Separate training and validation data without leakage.
 
 Example scenario: for token IDs `[0, 1, 2, 3, 4, 5]` and context length three,
 one sample can use input `[0, 1, 2]` and target `[1, 2, 3]`. Sampling policy
@@ -172,12 +172,12 @@ random.
 
 ### 11. Training and evaluation loops
 
-- [ ] Seed all relevant random number generators.
-- [ ] Implement a clear training step: zero gradients, forward pass, loss,
+- [x] Seed all relevant random number generators.
+- [x] Implement a clear training step: zero gradients, forward pass, loss,
       backward pass, and optimizer update.
-- [ ] Report training and validation losses at controlled intervals.
-- [ ] Use evaluation mode and disable gradient tracking during evaluation.
-- [ ] Keep default runs small enough for a CPU.
+- [x] Report training and validation losses at controlled intervals.
+- [x] Use evaluation mode and disable gradient tracking during evaluation.
+- [x] Keep default runs small enough for a CPU.
 
 Example scenario: deliberately train a tiny model on a very small repeated
 sequence and confirm that it can overfit it. This is a useful end-to-end check
@@ -185,11 +185,11 @@ before training on a larger corpus.
 
 ### 12. Checkpointing
 
-- [ ] Save model parameters, optimizer state, configuration, training step, and
+- [x] Save model parameters, optimizer state, configuration, training step, and
       relevant metadata.
-- [ ] Restore a checkpoint onto an explicitly selected device.
-- [ ] Resume training without silently resetting optimizer progress.
-- [ ] Confirm a save/load round trip produces identical logits in evaluation
+- [x] Restore a checkpoint onto an explicitly selected device.
+- [x] Resume training without silently resetting optimizer progress.
+- [x] Confirm a save/load round trip produces identical logits in evaluation
       mode.
 
 Checkpoints should contain enough information to reconstruct the model without
@@ -197,12 +197,12 @@ depending on undocumented command-line defaults.
 
 ### 13. Autoregressive text generation
 
-- [ ] Implement greedy next-token selection.
-- [ ] Add temperature-controlled sampling.
-- [ ] Add top-k sampling.
-- [ ] Crop long input histories to the configured context length.
-- [ ] Stop at an end-of-text token when configured to do so.
-- [ ] Preserve deterministic behavior when a seed is supplied.
+- [x] Implement greedy next-token selection.
+- [x] Add temperature-controlled sampling.
+- [x] Add top-k sampling.
+- [x] Crop long input histories to the configured context length.
+- [x] Stop at an end-of-text token when configured to do so.
+- [x] Preserve deterministic behavior when a seed is supplied.
 
 At each generation step, run the model on the available context, take logits
 from the final time position `(B, V)`, select or sample the next token, append

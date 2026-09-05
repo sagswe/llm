@@ -62,6 +62,37 @@ class DecoderLanguageModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "context_length"):
             model(torch.zeros(2, 5, dtype=torch.long))
 
+    def test_model_computes_next_token_loss(self):
+        torch.manual_seed(0)
+        model = DecoderLanguageModel(ModelConfig(dropout=0.0))
+        token_ids = torch.tensor([[0, 1, 2, 3]])
+        targets = torch.tensor([[1, 2, 3, 4]])
+
+        output = model(token_ids, targets)
+
+        self.assertIsNotNone(output.loss)
+        self.assertEqual(tuple(output.logits.shape), (1, 4, 32))
+        self.assertTrue(torch.isfinite(output.loss))
+
+    def test_loss_rejects_mismatched_target_shape(self):
+        model = DecoderLanguageModel(ModelConfig())
+
+        with self.assertRaisesRegex(ValueError, "same shape"):
+            model(torch.zeros(1, 4, dtype=torch.long), torch.zeros(1, 3, dtype=torch.long))
+
+    def test_generate_greedy_appends_tokens(self):
+        torch.manual_seed(0)
+        model = DecoderLanguageModel(ModelConfig(context_length=4, dropout=0.0))
+        token_ids = torch.tensor([[0, 1, 2, 3, 4, 5]])
+
+        generated = model.generate(
+            token_ids,
+            max_new_tokens=3,
+            temperature=0,
+        )
+
+        self.assertEqual(tuple(generated.shape), (1, 9))
+
 
 if __name__ == "__main__":
     unittest.main()
