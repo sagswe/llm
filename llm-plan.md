@@ -221,15 +221,15 @@ Example scenarios:
 
 ### 14. Focused verification
 
-- [ ] Check tensor shapes at every model boundary.
-- [ ] Check context-length and configuration validation.
-- [ ] Check tokenization round trips.
-- [ ] Check that weight tying uses one shared parameter.
-- [ ] Check finite logits, loss, and gradients.
-- [ ] Check that a training step can reduce loss on a tiny fixed batch.
-- [ ] Check deterministic generation with a fixed seed.
-- [ ] Check checkpoint save/load equivalence.
-- [ ] Compare a small hand-written calculation with a trusted PyTorch operation
+- [x] Check tensor shapes at every model boundary.
+- [x] Check context-length and configuration validation.
+- [x] Check tokenization round trips.
+- [x] Check that weight tying uses one shared parameter.
+- [x] Check finite logits, loss, and gradients.
+- [x] Check that a training step can reduce loss on a tiny fixed batch.
+- [x] Check deterministic generation with a fixed seed.
+- [x] Check checkpoint save/load equivalence.
+- [x] Compare a small hand-written calculation with a trusted PyTorch operation
       where it clarifies the math.
 
 Verification can initially use small executable examples if formal tests are
