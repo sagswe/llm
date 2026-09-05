@@ -11,6 +11,7 @@ from tqdm.auto import tqdm
 from learning_llm.model import DecoderLanguageModel
 from learning_llm.training.checkpoint import load_training_state, save_checkpoint
 from learning_llm.training.config import TrainingConfig
+from learning_llm.training.device import resolve_device
 
 
 @dataclass(frozen=True)
@@ -65,9 +66,11 @@ def train(
 ) -> TrainingResult:
     """Train with visible progress, ETA, loss, validation, and checkpoint logs."""
     torch.manual_seed(config.seed)
-    device = torch.device(config.device)
+    device = resolve_device(config.device)
     model.to(device)
     model.train()
+    if config.show_progress:
+        print(f"using device: {device}")
 
     optimizer = torch.optim.AdamW(
         model.parameters(),

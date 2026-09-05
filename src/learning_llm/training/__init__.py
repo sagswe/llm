@@ -6,6 +6,7 @@ from learning_llm.training.checkpoint import (
     save_checkpoint,
 )
 from learning_llm.training.config import TrainingConfig
+from learning_llm.training.device import resolve_device
 from learning_llm.training.loop import EvaluationResult, TrainingResult, evaluate, train
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "evaluate",
     "load_checkpoint",
     "load_training_state",
+    "resolve_device",
     "save_checkpoint",
     "train",
 ]

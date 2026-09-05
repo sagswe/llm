@@ -16,7 +16,7 @@ class TrainingConfig:
     eval_interval: int = 50
     eval_batches: int = 10
     seed: int = 1337
-    device: str = "cpu"
+    device: str = "auto"
     checkpoint_path: Path = Path("artifacts/checkpoints/tiny-lm.pt")
     resume_from: Path | None = None
     checkpoint_each_epoch: bool = True

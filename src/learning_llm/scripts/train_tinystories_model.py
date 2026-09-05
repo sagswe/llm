@@ -83,7 +83,17 @@ def main() -> None:
     parser.add_argument("--eval-batches", type=int, default=20)
     parser.add_argument("--train-fraction", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=1337)
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--device",
+        default="auto",
+        help="Use 'auto', 'cpu', 'cuda', 'cuda:0', or 'mps'.",
+    )
+    parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument(
+        "--pin-memory",
+        action="store_true",
+        help="Pin DataLoader memory when training on CUDA.",
+    )
     parser.add_argument(
         "--resume-from",
         type=Path,
@@ -126,12 +136,16 @@ def main() -> None:
         batch_size=args.batch_size,
         shuffle=True,
         drop_last=True,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
     )
     validation_loader = DataLoader(
         validation_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         drop_last=False,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
     )
 
     model_config = ModelConfig(

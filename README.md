@@ -45,6 +45,11 @@ Training logs a progress bar with epoch, batch, loss, token throughput, ETA,
 periodic validation loss, a final checkpoint, and by default one checkpoint per
 completed epoch.
 
+The training command defaults to `--device auto`, which chooses CUDA first, then
+Apple MPS, then CPU. Pass `--device cuda`, `--device cuda:0`, `--device mps`, or
+`--device cpu` to force a device. On CUDA machines, `--pin-memory` and
+`--num-workers 4` can improve input-pipeline throughput.
+
 Quick smoke run:
 
 ```bash
@@ -59,6 +64,7 @@ uv run learning-llm-train \
   --epochs 1 \
   --max-steps 1000 \
   --eval-interval 100 \
+  --device auto \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
 
@@ -75,6 +81,7 @@ uv run learning-llm-train \
   --epochs 3 \
   --max-steps 50000 \
   --eval-interval 1000 \
+  --device auto \
   --checkpoint artifacts/checkpoints/tinystories-tiny-lm.pt
 ```
 
@@ -95,6 +102,7 @@ uv run learning-llm-train \
   --epochs 1 \
   --max-steps 10000 \
   --eval-interval 1000 \
+  --device auto \
   --checkpoint artifacts/checkpoints/tinystories-gpt2-small-shape.pt
 ```
 
