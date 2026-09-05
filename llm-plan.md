@@ -111,9 +111,9 @@ final normalization before producing vocabulary logits.
 
 ### 7. Language-model head and weight tying
 
-- [ ] Project normalized hidden states `(B, T, C)` to logits `(B, T, V)`.
-- [ ] Tie the language-model head weight to the token embedding weight.
-- [ ] Verify that both modules reference the same parameter rather than copied
+- [x] Project normalized hidden states `(B, T, C)` to logits `(B, T, V)`.
+- [x] Tie the language-model head weight to the token embedding weight.
+- [x] Verify that both modules reference the same parameter rather than copied
       values.
 
 The logit at `(b, t, v)` is the model's unnormalized score for vocabulary token

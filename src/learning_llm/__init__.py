@@ -3,6 +3,9 @@
 from learning_llm.model import (
     DecoderBackbone,
     DecoderBackboneOutput,
+    DecoderLanguageModel,
+    DecoderLanguageModelOutput,
+    LanguageModelHead,
     ModelConfig,
     TransformerBlock,
     TransformerStack,
@@ -11,6 +14,9 @@ from learning_llm.model import (
 __all__ = [
     "DecoderBackbone",
     "DecoderBackboneOutput",
+    "DecoderLanguageModel",
+    "DecoderLanguageModelOutput",
+    "LanguageModelHead",
     "ModelConfig",
     "TransformerBlock",
     "TransformerStack",
